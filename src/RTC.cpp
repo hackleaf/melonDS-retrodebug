@@ -875,6 +875,28 @@ void RTC::ByteIn(u8 val)
 {
     if (InputPos == 0)
     {
+        // Retrodebug: intercept raw command byte before decoding.
+        // RTCom and other hacks send commands MSB-first (via rtcTransferReversed),
+        // which arrive here as raw bytes like 0x6C-0x6F. These would collide with
+        // standard NDS registers after bit-reversal. Let the hook handle them
+        // before the reversal step.
+        if (OnRegAccess)
+        {
+            bool is_read = (val & 1);
+            u8 v = 0;
+            if (OnRegAccess(OnRegAccessUserData, val, is_read, &v))
+            {
+                CurCmd = val;
+                if (is_read)
+                {
+                    Output[0] = v;
+                    OutputPos = 0;
+                    OutputBit = 0;
+                }
+                return;
+            }
+        }
+
         if ((val & 0xF0) == 0x60)
         {
             u8 rev[16] = {0x06, 0x86, 0x46, 0xC6, 0x26, 0xA6, 0x66, 0xE6, 0x16, 0x96, 0x56, 0xD6, 0x36, 0xB6, 0x76, 0xF6};
@@ -899,6 +921,17 @@ void RTC::ByteIn(u8 val)
             CmdRead();
         }
         return;
+    }
+
+    // Retrodebug: intercept data bytes for hooked commands
+    if (OnRegAccess)
+    {
+        u8 v = val;
+        if (OnRegAccess(OnRegAccessUserData, CurCmd, false, &v))
+        {
+            InputPos++;
+            return;
+        }
     }
 
     CmdWrite(val);
