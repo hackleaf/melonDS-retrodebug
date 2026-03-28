@@ -65,6 +65,13 @@ public:
     u16 Read();
     void Write(u16 val, bool byte);
 
+    // Retrodebug: callback for extended/unhandled RTC register access.
+    // Called with the raw command byte, read/write flag, and value pointer.
+    // For reads: if callback returns true, *value is used as the output byte.
+    // For writes: *value contains the written byte.
+    bool (*OnRegAccess)(void *userdata, u8 cmd, bool is_read, u8 *value) = nullptr;
+    void *OnRegAccessUserData = nullptr;
+
 private:
     melonDS::NDS& NDS;
     u16 IO;

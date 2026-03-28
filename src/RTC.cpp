@@ -649,6 +649,16 @@ void RTC::CmdRead()
     {
         if (NDS.ConsoleType != 1)
         {
+            // Not DSi — try retrodebug hook for extended register access
+            if (OnRegAccess)
+            {
+                u8 val = 0;
+                if (OnRegAccess(OnRegAccessUserData, CurCmd, true, &val))
+                {
+                    Output[0] = val;
+                    return;
+                }
+            }
             Log(LogLevel::Debug, "RTC: unknown read command %02X\n", CurCmd);
             return;
         }
@@ -680,6 +690,15 @@ void RTC::CmdRead()
         return;
     }
 
+    if (OnRegAccess)
+    {
+        u8 val = 0;
+        if (OnRegAccess(OnRegAccessUserData, CurCmd, true, &val))
+        {
+            Output[0] = val;
+            return;
+        }
+    }
     Log(LogLevel::Debug, "RTC: unknown read command %02X\n", CurCmd);
 }
 
@@ -799,6 +818,12 @@ void RTC::CmdWrite(u8 val)
     {
         if (NDS.ConsoleType != 1)
         {
+            if (OnRegAccess)
+            {
+                u8 v = val;
+                if (OnRegAccess(OnRegAccessUserData, CurCmd, false, &v))
+                    return;
+            }
             Log(LogLevel::Debug, "RTC: unknown write command %02X\n", CurCmd);
             return;
         }
@@ -837,6 +862,12 @@ void RTC::CmdWrite(u8 val)
         return;
     }
 
+    if (OnRegAccess)
+    {
+        u8 v = val;
+        if (OnRegAccess(OnRegAccessUserData, CurCmd, false, &v))
+            return;
+    }
     Log(LogLevel::Debug, "RTC: unknown write command %02X\n", CurCmd);
 }
 
