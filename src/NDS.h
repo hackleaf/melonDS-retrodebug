@@ -44,6 +44,8 @@
 #include "DMA.h"
 #include "FreeBIOS.h"
 
+namespace melonDS { class RetroDebug; }
+
 // when touching the main loop/timing code, pls test a lot of shit
 // with this enabled, to make sure it doesn't desync
 //#define DEBUG_CHECK_DESYNC
@@ -330,6 +332,9 @@ public: // TODO: Encapsulate the rest of these members
     GBACart::GBACartSlot GBACartSlot;
     melonDS::GPU GPU;
     melonDS::AREngine AREngine;
+
+    // retrodebug interface (nullptr when not attached)
+    RetroDebug* RetroDbg = nullptr;
 
     const u32 ARM7WRAMSize = 0x10000;
     u8* ARM7WRAM;
