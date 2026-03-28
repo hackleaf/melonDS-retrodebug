@@ -920,6 +920,9 @@ u32 NDS::RunFrame()
     bool runFrame = Running && !(CPUStop & CPUStop_Sleep);
     while (Running)
     {
+        // Retrodebug: if either CPU halted, stop the frame immediately
+        if (ARM9.RetroDebugHalt || ARM7.RetroDebugHalt) break;
+
         u64 frametarget = SysTimestamp + 560190;
 
         if (CPUStop & CPUStop_Sleep)
