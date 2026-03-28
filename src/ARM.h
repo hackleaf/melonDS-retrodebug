@@ -151,6 +151,11 @@ public:
 
     void CheckGdbIncoming();
 
+    // retrodebug: per-instruction hook. Called with the real PC (pipeline-adjusted).
+    // Returns true if the core should halt. nullptr when no debug active (zero overhead).
+    bool (*RetroDebugHook)(u32 pc, void* userdata) = nullptr;
+    void* RetroDebugUserData = nullptr;
+
     u32 Num;
 
     s32 Cycles;

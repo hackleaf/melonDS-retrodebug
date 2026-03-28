@@ -44,6 +44,8 @@
 #include "DMA.h"
 #include "FreeBIOS.h"
 
+namespace melonDS { class RetroDebug; }
+
 // when touching the main loop/timing code, pls test a lot of shit
 // with this enabled, to make sure it doesn't desync
 //#define DEBUG_CHECK_DESYNC
@@ -122,7 +124,7 @@ enum
     IRQ_IPCSendDone,
     IRQ_IPCRecv,
     IRQ_CartXferDone,
-    IRQ_CartIREQMC,   // IRQ triggered by game cart (example: Pokémon Typing Adventure, BT controller)
+    IRQ_CartIREQMC,
     IRQ_GXFIFO,
     IRQ_LidOpen,
     IRQ_SPI,
@@ -226,9 +228,6 @@ enum
 {
     GBAAddon_RAMExpansion = 1,
     GBAAddon_RumblePak = 2,
-    // Each game in the GBA Boktai trilogy uses the same solar sensor,
-    // but Lunar Knights (the only NDS game to use the solar sensor)
-    // applies slightly different effects depending on the game.
     GBAAddon_SolarSensorBoktai1 = 3,
     GBAAddon_SolarSensorBoktai2 = 4,
     GBAAddon_SolarSensorBoktai3 = 5,
@@ -291,8 +290,6 @@ public: // TODO: Encapsulate the rest of these members
     u16 ExMemCnt[2];
 
 protected:
-    // These BIOS arrays should be declared *before* the component objects (JIT, SPI, etc.)
-    // so that they're initialized before the component objects' constructors run.
     std::array<u8, ARM9BIOSSize> ARM9BIOS;
     std::array<u8, ARM7BIOSSize> ARM7BIOS;
     bool ARM9BIOSNative;
@@ -314,10 +311,6 @@ public: // TODO: Encapsulate the rest of these members
     u32 KeyInput;
     u16 RCnt;
 
-    // JIT MUST be declared before all other component objects,
-    // as they'll need the memory that it allocates in its constructor!
-    // (Reminder: C++ fields are initialized in the order they're declared,
-    // regardless of what the constructor's initializer list says.)
     melonDS::ARMJIT JIT;
     ARMv5 ARM9;
     ARMv4 ARM7;
@@ -331,16 +324,16 @@ public: // TODO: Encapsulate the rest of these members
     melonDS::GPU GPU;
     melonDS::AREngine AREngine;
 
+    // retrodebug interface (nullptr when not attached)
+    RetroDebug* RetroDbg = nullptr;
+
     const u32 ARM7WRAMSize = 0x10000;
     u8* ARM7WRAM;
 
-    // provision for DSi second cart slot
     NDSCart::NDSCartSlot* NDSCartSlots[2];
 
     virtual void Reset();
     void Start();
-
-    /// Stop the emulator.
     virtual void Stop(Platform::StopReason reason = Platform::StopReason::External);
 
     bool DoSavestate(Savestate* file);
@@ -350,8 +343,6 @@ public: // TODO: Encapsulate the rest of these members
 
     void LoadBIOS();
 
-    /// @return \c true if the loaded ARM9 BIOS image is a known dump
-    /// of a native DS-compatible ARM9 BIOS.
     [[nodiscard]] bool IsLoadedARM9BIOSKnownNative() const noexcept { return ARM9BIOSNative; }
     [[nodiscard]] const std::array<u8, ARM9BIOSSize>& GetARM9BIOS() const noexcept { return ARM9BIOS; }
     void SetARM9BIOS(const std::array<u8, ARM9BIOSSize>& bios) noexcept;
@@ -359,8 +350,6 @@ public: // TODO: Encapsulate the rest of these members
     [[nodiscard]] const std::array<u8, ARM7BIOSSize>& GetARM7BIOS() const noexcept { return ARM7BIOS; }
     void SetARM7BIOS(const std::array<u8, ARM7BIOSSize>& bios) noexcept;
 
-    /// @return \c true if the loaded ARM7 BIOS image is a known dump
-    /// of a native DS-compatible ARM9 BIOS.
     [[nodiscard]] bool IsLoadedARM7BIOSKnownNative() const noexcept { return ARM7BIOSNative; }
 
     [[nodiscard]] NDSCart::CartCommon* GetNDSCart() { return NDSCartSlot.GetCart(); }
@@ -393,16 +382,6 @@ public: // TODO: Encapsulate the rest of these members
     [[nodiscard]] GBACart::CartCommon* GetGBACart() { return (ConsoleType == 1) ? nullptr : GBACartSlot.GetCart(); }
     [[nodiscard]] const GBACart::CartCommon* GetGBACart() const {  return (ConsoleType == 1) ? nullptr : GBACartSlot.GetCart(); }
 
-    /// Inserts a GBA cart into the emulated console's Slot-2.
-    ///
-    /// @param cart The GBA cart, most likely (but not necessarily) returned from GBACart::ParseROM.
-    /// To insert an accessory that doesn't use a ROM image
-    /// (e.g. the Expansion Pak), create it manually and pass it here.
-    /// If \c nullptr, the existing cart is ejected.
-    /// If this is a DSi, this method does nothing.
-    ///
-    /// @post \c cart is \c nullptr and this NDS takes ownership
-    /// of the cart object it held, if any.
     void SetGBACart(std::unique_ptr<GBACart::CartCommon>&& cart) { if (ConsoleType == 0) GBACartSlot.SetCart(std::move(cart)); }
 
     u8* GetGBASave() { return GBACartSlot.GetSaveMemory(); }

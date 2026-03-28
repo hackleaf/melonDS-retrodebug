@@ -83,7 +83,9 @@ add_library(core STATIC
     tiny-AES-c/aes.c
     xxhash/xxhash.c
 
-    blip-buf/blip_buf.c)
+    blip-buf/blip_buf.c
+
+    retrodebug/RetroDebug.cpp)
 
 if (ENABLE_GDBSTUB)
     message(NOTICE "Enabling GDB stub")
@@ -242,4 +244,3 @@ endif()
 #    BEFORE PUBLIC -fsanitize=undefined PUBLIC -fsanitize=address
 #  )
 #endif()
-
