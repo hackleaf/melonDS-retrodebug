@@ -169,6 +169,12 @@ public:
     u32 DataRegion;
     s32 DataCycles;
 
+    // Retrodebug execution hook: called before each instruction.
+    // Returns true to request halt (breakpoint hit).
+    bool (*RetroDebugHook)(void *userdata, u32 addr, bool thumb) = nullptr;
+    void *RetroDebugUserData = nullptr;
+    bool RetroDebugHalt = false;
+
     u32 R[16]; // heh
     u32 CPSR;
     u32 R_FIQ[8]; // holding SPSR too

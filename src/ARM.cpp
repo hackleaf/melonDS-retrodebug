@@ -653,6 +653,12 @@ void ARMv5::Execute()
         {
             if (CPSR & 0x20) // THUMB
             {
+                if (RetroDebugHook)
+                {
+                    if (RetroDebugHook(RetroDebugUserData, R[15] - 2, true))
+                    { RetroDebugHalt = true; break; }
+                }
+
                 if constexpr (mode == CPUExecuteMode::InterpreterGDB)
                     GdbCheckC();
 
@@ -669,6 +675,12 @@ void ARMv5::Execute()
             }
             else
             {
+                if (RetroDebugHook)
+                {
+                    if (RetroDebugHook(RetroDebugUserData, R[15] - 4, false))
+                    { RetroDebugHalt = true; break; }
+                }
+
                 if constexpr (mode == CPUExecuteMode::InterpreterGDB)
                     GdbCheckC();
 
@@ -792,6 +804,12 @@ void ARMv4::Execute()
         {
             if (CPSR & 0x20) // THUMB
             {
+                if (RetroDebugHook)
+                {
+                    if (RetroDebugHook(RetroDebugUserData, R[15] - 2, true))
+                    { RetroDebugHalt = true; break; }
+                }
+
                 if constexpr (mode == CPUExecuteMode::InterpreterGDB)
                     GdbCheckC();
 
@@ -807,6 +825,12 @@ void ARMv4::Execute()
             }
             else
             {
+                if (RetroDebugHook)
+                {
+                    if (RetroDebugHook(RetroDebugUserData, R[15] - 4, false))
+                    { RetroDebugHalt = true; break; }
+                }
+
                 if constexpr (mode == CPUExecuteMode::InterpreterGDB)
                     GdbCheckC();
 
