@@ -992,6 +992,9 @@ u32 NDS::RunFrame()
                     ARM9.Execute<cpuMode>();
                 }
 
+                // Retrodebug: if ARM9 halted at a breakpoint/step, abort the frame
+                if (ARM9.RetroDebugHalt) break;
+
                 RunTimers(0);
                 GPU.GPU3D.Run();
 
@@ -1019,8 +1022,13 @@ u32 NDS::RunFrame()
                         ARM7.Execute<cpuMode>();
                     }
 
+                    // Retrodebug: if ARM7 halted at a breakpoint/step, abort the frame
+                    if (ARM7.RetroDebugHalt) break;
+
                     RunTimers(1);
                 }
+
+                if (ARM7.RetroDebugHalt) break;
 
                 RunSystem(target);
 
